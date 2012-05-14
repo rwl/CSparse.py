@@ -1015,3 +1015,310 @@ def cs_dmperm(A, seed):
     s[nb2] = n
     D.nb = nb2
     return D
+
+
+# Drop small entries from a sparse matrix.
+
+class _cs_tol(cs_ifkeep):
+    def fkeep(self, i, j, aij, other):
+        return abs(aij) > float(other)
+
+
+def cs_droptol(A, tol):
+    """Removes entries from a matrix with absolute value <= tol.
+
+    @param A: column-compressed matrix
+    @param tol: drop tolerance
+    @return: nz, new number of entries in A, -1 on error
+    """
+    return cs_fkeep(A, _cs_tol(), tol) # keep all large entries
+
+
+# Drop zeros from a sparse matrix.
+
+class _cs_nonzero(cs_ifkeep):
+    def fkeep(self, i, j, aij, other):
+        return aij != 0
+
+
+def cs_dropzeros(A):
+    """Removes numerically zero entries from a matrix.
+
+    @param A: column-compressed matrix
+    @return: nz, new number of entries in A, -1 on error
+    """
+    return cs_fkeep(A, _cs_nonzero(), None) # keep all nonzero entries
+
+
+# Remove (and sum) duplicates.
+
+def cs_dupl(A):
+    """Removes and sums duplicate entries in a sparse matrix.
+     *
+     * @param A
+     *            column-compressed matrix
+     * @return true if successful, false on error
+    """
+    nz = 0
+    if not CS_CSC(A): # check inputs
+        return False
+    m, n = A.m, A.n
+    Ap, Ai, Ax = A.p, A.i, A.x
+    w = [0]*m # get workspace
+    for i in range(m):
+        w[i] = -1 # row i not yet seen
+    for j in range(n):
+        q = nz # column j will start at q
+        for p in range(Ap[j], Ap[j + 1]):
+            i = Ai[p] # A(i,j) is nonzero
+            if w[i] >= q:
+                Ax[w[i]] += Ax[p] # A(i,j) is a duplicate
+            else:
+                w[i] = nz # record where row i occurs
+                Ai[nz] = i # keep A(i,j)
+                Ax[nz] = Ax[p]
+                nz+=1
+        Ap[j] = q # record start of column j
+    Ap[n] = nz # finalize A
+    return cs_sprealloc(A, 0) # remove extra space from A
+
+
+# Add an entry to a triplet matrix.
+
+def cs_entry(T, i, j, x):
+    """Adds an entry to a triplet matrix. Memory-space and dimension of T are
+    increased if necessary.
+
+    @param T: triplet matrix; new entry added on output
+    @param i: row index of new entry
+    @param j: column index of new entry
+    @param x: numerical value of new entry
+    @return: true if successful, false otherwise
+    """
+    if not CS_TRIPLET(T) or i < 0 or j < 0:
+        return False # check inputs
+    if T.nz >= T.nzmax:
+        cs_sprealloc(T, 2 * (T.nzmax))
+    if T.x != None:
+        T.x[T.nz] = x
+    T.i[T.nz] = i
+    T.p[T.nz] = j
+    T.nz+=1
+    T.m = max(T.m, i + 1)
+    T.n = max(T.n, j + 1)
+    return True
+
+
+# Nonzero pattern of kth row of Cholesky factor, L(k,1:k-1).
+
+def cs_ereach(A, k, parent, s, s_offset, w):
+    """Find nonzero pattern of Cholesky L(k,1:k-1) using etree and triu(A(:,k)).
+    If ok, s[top..n-1] contains pattern of L(k,:).
+
+    @param A: column-compressed matrix; L is the Cholesky factor of A
+    @param k: find kth row of L
+    @param parent: elimination tree of A
+    @param s: size n, s[top..n-1] is nonzero pattern of L(k,1:k-1)
+    @param s_offset: the index of the first element in array s
+    @param w: size n, work array, w[0..n-1]>=0 on input, unchanged on output
+
+    @return top in successful, -1 on error
+    """
+#    int i, p, n, len, top, Ap[], Ai[];
+    if not CS_CSC(A) or parent == None or s == None or w == None:
+        return -1 # check inputs
+    top = n = A.n
+    Ap = A.p
+    Ai = A.i
+    CS_MARK(w, k) # mark node k as visited
+    for p in range(Ap[k], Ap[k + 1]):
+        i = Ai[p] # A(i,k) is nonzero
+        if i > k:
+            continue # only use upper triangular part of A
+        len = 0
+        while not CS_MARKED(w, i): # traverse up etree
+            s[s_offset + len] = i # L(k,i) is nonzero
+            len+=1
+            CS_MARK(w, i) # mark i as visited
+            i = parent[i]
+        while len > 0:
+            top-=1
+            len-=1
+            s[s_offset + top] = s[s_offset + len] # push path onto stack
+    for p in range(top, n):
+        CS_MARK(w, s[s_offset + p]) # unmark all nodes
+    CS_MARK(w, k) # unmark node k
+    return top # s [top..n-1] contains pattern of L(k,:)
+
+
+# Find elimination tree.
+
+def cs_etree(A, ata):
+    """Compute the elimination tree of A or A'A (without forming A'A).
+
+    @param A: column-compressed matrix
+    @param ata: analyze A if false, A'A oterwise
+    @return: elimination tree, null on error
+    """
+#    int i, k, p, m, n, inext, Ap[], Ai[], w[], parent[], ancestor[], prev[];
+    if not CS_CSC(A):
+        return None # check inputs
+    m, n = A.m, A.n
+    Ap, Ai = A.p, A.i
+    parent = [0]*n # allocate result
+    w = [0]*(n + (m if ata else 0)) # get workspace
+    ancestor = w
+    prev = w
+    prev_offset = n
+    if ata:
+        for i in range(m):
+            prev[prev_offset + i] = -1
+    for k in range(n):
+        parent[k] = -1 # node k has no parent yet
+        ancestor[k] = -1 # nor does k have an ancestor
+        for p in range(Ap[k], Ap[k + 1]):
+            i = prev[prev_offset + Ai[p]] if ata else Ai[p]
+            while i != -1 and i < k: # traverse from i to k
+                inext = ancestor[i] # inext = ancestor of i
+                ancestor[i] = k # path compression
+                if inext == -1:
+                    parent[i] = k # no anc., parent is k
+                i = inext
+            if ata:
+                prev[prev_offset + Ai[p]] = k
+    return parent
+
+
+def cs_fkeep(A, fkeep, other):
+    """Drops entries from a sparse matrix;
+
+    @param A: column-compressed matrix
+    @param fkeep: drop aij if fkeep.fkeep(i,j,aij,other) is false
+    @param other: optional parameter to fkeep
+    @return: nz, new number of entries in A, -1 on error
+    """
+    nz = 0
+    if not CS_CSC(A):
+        return (-1) # check inputs
+    n, Ap, Ai, Ax = A.n, A.p, A.i, A.x
+    for j in range(n):
+        p = Ap[j] # get current location of col j
+        Ap[j] = nz # record new location of col j
+        while p < Ap[j + 1]:
+            if fkeep.fkeep(Ai[p], j, Ax[p] if Ax != None else 1, other):
+                if Ax != None:
+                    Ax[nz] = Ax[p] # keep A(i,j)
+                Ai[nz] = Ai[p]
+                nz+=1
+            p+=1
+    Ap[n] = nz # finalize A
+    cs_sprealloc(A, 0) # remove extra space from A
+    return nz
+
+
+def cs_gaxpy(A, x, y):
+    """Sparse matrix times dense column vector, y = A*x+y.
+
+    @param A: column-compressed matrix
+    @param x: size n, vector x
+    @param y: size m, vector y
+    @return: true if successful, false on error
+    """
+    if not CS_CSC(A) or x == None or y == None:
+        return False # check inputs
+    n, Ap, Ai, Ax = A.n, A.p, A.i, A.x
+    for j in range(n):
+        for p in range(Ap[j], Ap[j + 1]):
+            y[Ai[p]] += Ax[p] * x[j]
+    return True
+
+
+def cs_happly(V, i, beta, x):
+    """Applies a Householder reflection to a dense vector,
+    x = (I - beta*v*v')*x.
+
+    @param V: column-compressed matrix of Householder vectors
+    @param i: v = V(:,i), the ith column of V
+    @param beta: scalar beta
+    @param x: vector x of size m
+    @return true if successful, false on error
+    """
+    tau = 0;
+    if not CS_CSC(V) or x == None:
+        return False # check inputs
+    Vp, Vi, Vx = V.p, V.i, V.x
+    for p in range(Vp[i], Vp[i + 1]): # tau = v'*x
+        tau += Vx[p] * x[Vi[p]]
+    tau *= beta # tau = beta*(v'*x)
+    for p in range(Vp[i], Vp[i + 1]): # x = x - v*tau
+        x[Vi[p]] -= Vx[p] * tau
+    return True
+
+
+def cs_house(x, x_offset, beta, n):
+    """Compute a Householder reflection, overwrite x with v, where
+    (I-beta*v*v')*x = s*e1. See Algo 5.1.1, Golub & Van Loan, 3rd ed.
+
+    @param x: x on output, v on input
+    @param x_offset: the index of the first element in array x
+    @param beta: scalar beta
+    @param n: the length of x
+    @return: norm2(x), -1 on error
+    """
+    sigma = 0
+    if x == None or beta == None:
+        return -1 # check inputs
+    for i in range(1, n):
+        sigma += x[x_offset + i] * x[x_offset + i]
+    if sigma == 0:
+        s = abs(x[x_offset + 0]) # s = |x(0)|
+        beta[0] = 2.0 if x[x_offset + 0] <= 0 else 0.0
+        x[x_offset + 0] = 1
+    else:
+        s = sqrt(x[x_offset + 0] * x[x_offset + 0] + sigma) # s = norm (x)
+        x[x_offset + 0] = x[x_offset + 0] - s if x[x_offset + 0] <= 0 else -sigma / (x[x_offset + 0] + s)
+        beta[0] = -1.0 / (s * x[x_offset + 0])
+    return s
+
+
+def cs_ipvec(p, b, x, n):
+    """Permutes a vector, x = P'b.
+
+    @param p: permutation vector, p=null denotes identity
+    @param b: input vector
+    @param x: output vector, x = P'b
+    @param n: length of p, b, and x
+    @return: true if successful, false on error
+    """
+    if x == None or b == None:
+        return False # check inputs
+    for k in range(n):
+        x[p[k] if p != None else k] = b[k]
+    return True
+
+
+def cs_leaf(i, j, first, first_offset, maxfirst, maxfirst_offset,
+        prevleaf, prevleaf_offset, ancestor, ancestor_offset, jleaf):
+    """Determines if j is a leaf of the skeleton matrix and find lowest common
+    ancestor (lca).
+    """
+    if first == None or maxfirst == None or prevleaf == None or ancestor == None or jleaf == None:
+        return -1
+    jleaf[0] = 0
+    if i <= j or first[first_offset + j] <= maxfirst[maxfirst_offset + i]:
+        return -1 # j not a leaf
+    maxfirst[maxfirst_offset + i] = first[first_offset + j] # update max first[j] seen so far
+    jprev = prevleaf[prevleaf_offset + i] # jprev = previous leaf of ith subtree
+    prevleaf[prevleaf_offset + i] = j
+    jleaf[0] = 1 if jprev == -1 else 2 # j is first or subsequent leaf
+    if jleaf[0] == 1:
+        return i # if 1st leaf, q = root of ith subtree
+    q = jprev
+    while q != ancestor[ancestor_offset + q]:
+        q = ancestor[ancestor_offset + q]
+    s = jprev
+    while s != q:
+        sparent = ancestor[ancestor_offset + s] # path compression
+        ancestor[ancestor_offset + s] = q
+        s = sparent
+    return q # q = least common ancestor (jprev,j)
