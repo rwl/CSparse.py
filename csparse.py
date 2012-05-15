@@ -29,7 +29,7 @@ from random import randint
 CS_VER = 1 # CSparse.py Version 1.0.0
 CS_SUBVER = 0
 CS_SUBSUB = 0
-CS_DATE = "May 14, 2012" # PyCSparse release date
+CS_DATE = "May 14, 2012" # CSparse.py release date
 CS_COPYRIGHT = "Copyright (C) Timothy A. Davis, 2006-2011"
 
 
@@ -141,26 +141,6 @@ def CS_MARKED(w, j):
 
 def CS_MARK(w, j):
     w[j] = CS_FLIP(w[j])
-
-
-def cs_spalloc(m, n, nzmax, values, triplet):
-    """Allocate a sparse matrix (triplet form or compressed-column form).
-
-    @param m: number of rows
-    @param n: number of columns
-    @param nzmax: maximum number of entries
-    @param values: allocate pattern only if false, values and pattern otherwise
-    @param triplet: compressed-column if false, triplet form otherwise
-    @return sparse matrix
-    """
-    A = cs() # allocate the Dcs object
-    A.m, A.n = m, n # define dimensions and nzmax
-    A.nzmax = nzmax = max(nzmax, 1)
-    A.nz = 0 if triplet else -1 # allocate triplet or comp.col
-    A.p = [0]*nzmax if triplet else [0]*n + 1
-    A.i = [0]*nzmax
-    A.x = [0.0]*nzmax if values else None
-    return A
 
 
 class cs_ifkeep(object):
@@ -1367,13 +1347,11 @@ def cs_lsolve(L, x):
 
 def cs_ltsolve(L, x):
     """Solves an upper triangular system L'x=b where x and b are dense. x=b on
-     * input, solution on output.
-     *
-     * @param L
-     *            column-compressed, lower triangular matrix
-     * @param x
-     *            size n, right hand side on input, solution on output
-     * @return true if successful, false on error
+    input, solution on output.
+
+    @param L: column-compressed, lower triangular matrix
+    @param x: size n, right hand side on input, solution on output
+    @return true if successful, false on error
     """
     if not CS_CSC(L) or x == None:
         return False # check inputs
@@ -1397,10 +1375,6 @@ def cs_lu(A, S, tol):
     @param tol: partial pivoting threshold (1 for partial pivoting)
     @return: numeric LU factorization, null on error
     """
-#    Dcs L, U;
-#    Dcsn N;
-#    double pivot, Lx[], Ux[], x[], a, t;
-#    int Lp[], Li[], Up[], Ui[], pinv[], xi[], q[], n, ipiv, k, top, p, i, col, lnz, unz;
     if not CS_CSC(A) or S == None:
         return None # check inputs
     n, q = A.n, S.q
@@ -2415,25 +2389,25 @@ def cs_usolve(U, x):
     return True
 
 
-#def cs_spalloc(m, n, nzmax, values, triplet):
-#    """Allocate a sparse matrix (triplet form or compressed-column form).
-#
-#    @param m: number of rows
-#    @param n: number of columns
-#    @param nzmax: maximum number of entries
-#    @param values: allocate pattern only if false, values and pattern otherwise
-#    @param triplet: compressed-column if false, triplet form otherwise
-#    @return: sparse matrix
-#    """
-#    A = cs() # allocate the cs object
-#    A.m = m # define dimensions and nzmax
-#    A.n = n
-#    A.nzmax = nzmax = max(nzmax, 1)
-#    A.nz = 0 if triplet else -1 # allocate triplet or comp.col
-#    A.p = [0]*nzmax if triplet else [0]*(n + 1)
-#    A.i = [0]*nzmax
-#    A.x = [0.0]*nzmax if values else None
-#    return A
+def cs_spalloc(m, n, nzmax, values, triplet):
+    """Allocate a sparse matrix (triplet form or compressed-column form).
+
+    @param m: number of rows
+    @param n: number of columns
+    @param nzmax: maximum number of entries
+    @param values: allocate pattern only if false, values and pattern otherwise
+    @param triplet: compressed-column if false, triplet form otherwise
+    @return: sparse matrix
+    """
+    A = cs() # allocate the cs object
+    A.m = m # define dimensions and nzmax
+    A.n = n
+    A.nzmax = nzmax = max(nzmax, 1)
+    A.nz = 0 if triplet else -1 # allocate triplet or comp.col
+    A.p = [0]*nzmax if triplet else [0]*(n + 1)
+    A.i = [0]*nzmax
+    A.x = [0.0]*nzmax if values else None
+    return A
 
 
 def _copy(src, dest, length):
