@@ -16,7 +16,7 @@
 # License along with this Module; if not, write to the Free Software
 # Foundation, Inc, 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 
-"""PyCSparse: a Python Concise Sparse matrix package
+"""CSparse.py: a Concise Sparse matrix Python package
 
 @author: Timothy A. Davis
 @author: Richard Lincoln
@@ -26,7 +26,7 @@ from math import sqrt
 from random import randint
 
 
-CS_VER = 1 # PyCSparse Version 1.0.0
+CS_VER = 1 # CSparse.py Version 1.0.0
 CS_SUBVER = 0
 CS_SUBSUB = 0
 CS_DATE = "May 14, 2012" # PyCSparse release date
