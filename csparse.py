@@ -2,12 +2,12 @@
 # Copyright (C) 2012, Richard Lincoln.
 # http://www.cise.ufl.edu/research/sparse/CSparse
 #
-# CSparseJ is free software; you can redistribute it and/or
+# CSparse.py is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
 #
-# CSparseJ is distributed in the hope that it will be useful,
+# CSparse.py is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # Lesser General Public License for more details.
@@ -24,6 +24,7 @@
 
 from math import sqrt
 from random import randint
+from sys import stdout
 
 
 CS_VER = 1 # CSparse.py Version 1.0.0
@@ -1748,31 +1749,29 @@ def cs_print(A, brief):
     @param brief: print all of A if false, a few entries otherwise
     @return: true if successful, false on error
     """
-#    int p, j, m, n, nzmax, nz, Ap[], Ai[];
-#    double Ax[];
     if A == None:
-        print "(null)\n"
+        stdout.write("(null)\n")
         return False
     m, n, Ap, Ai, Ax = A.m, A.n, A.p, A.i, A.x
     nzmax = A.nzmax
     nz = A.nz
-    print "CSparse.py Version %d.%d.%d, %s.  %s\n" % (CS_VER, CS_SUBVER,
-            CS_SUBSUB, CS_DATE, CS_COPYRIGHT)
+    stdout.write("CSparse.py Version %d.%d.%d, %s.  %s\n" % (CS_VER, CS_SUBVER,
+            CS_SUBSUB, CS_DATE, CS_COPYRIGHT))
     if nz < 0:
-        print "%d-by-%d, nzmax: %d nnz: %d, 1-norm: %g\n" % m, n, nzmax, Ap[n], cs_norm(A)
+        stdout.write("%d-by-%d, nzmax: %d nnz: %d, 1-norm: %g\n" % (m, n, nzmax, Ap[n], cs_norm(A)))
         for j in range(n):
-            print "    col %d : locations %d to %d\n" % j, Ap[j], Ap[j + 1] - 1
+            stdout.write("    col %d : locations %d to %d\n" % (j, Ap[j], Ap[j + 1] - 1))
             for p in range(Ap[j], Ap[j + 1]):
-                print "      %d : %g\n" % Ai[p], Ax[p] if Ax != None else 1
+                stdout.write("      %d : %g\n" % (Ai[p], Ax[p] if Ax != None else 1))
                 if brief and p > 20:
-                    print "  ...\n"
+                    stdout.write("  ...\n")
                     return True
     else:
-        print "triplet: %d-by-%d, nzmax: %d nnz: %d\n" % m, n, nzmax, nz
+        stdout.write("triplet: %d-by-%d, nzmax: %d nnz: %d\n" % (m, n, nzmax, nz))
         for p in range(nz):
-            print "    %d %d : %g\n" % Ai[p], Ap[p], Ax[p] if Ax != None else 1
+            stdout.write("    %d %d : %g\n" % (Ai[p], Ap[p], Ax[p] if Ax != None else 1))
             if brief and p > 20:
-                print "  ...\n"
+                stdout.write("  ...\n")
                 return True
     return True
 
