@@ -1756,7 +1756,7 @@ def cs_print(A, brief):
     m, n, Ap, Ai, Ax = A.m, A.n, A.p, A.i, A.x
     nzmax = A.nzmax
     nz = A.nz
-    print "CSparseJ Version %d.%d.%d, %s.  %s\n" % (CS_VER, CS_SUBVER,
+    print "CSparse.py Version %d.%d.%d, %s.  %s\n" % (CS_VER, CS_SUBVER,
             CS_SUBSUB, CS_DATE, CS_COPYRIGHT)
     if nz < 0:
         print "%d-by-%d, nzmax: %d nnz: %d, 1-norm: %g\n" % m, n, nzmax, Ap[n], cs_norm(A)
@@ -1802,10 +1802,6 @@ def cs_qr(A, S):
     @param S: symbolic QR analysis
     @return: numeric QR factorization, null on error
     """
-#    double Rx[], Vx[], Ax[], x[], Beta[];
-#    int i, k, p, n, vnz, p1, top, m2, len, col, rnz, s[], leftmost[], Ap[], Ai[], parent[], Rp[], Ri[], Vp[], Vi[], w[], pinv[], q[];
-#    Dcs R, V;
-#    Dcsn N;
     if not CS_CSC(A) or S == None:
         return None
     n, Ap, Ai, Ax = A.n, A.p, A.i, A.x
