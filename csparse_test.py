@@ -18,6 +18,8 @@
 
 import time
 
+from sys import stdout
+
 from os.path import abspath, dirname, join
 
 import unittest
@@ -103,7 +105,7 @@ class CSparseTest(unittest.TestCase):
     def is_sym(self, A):
         """1 if A is square & upper tri., -1 if square & lower tri., 0 otherwise
         """
-        n = A.n, m = A.m, Ap = A.p, Ai = A.i ;
+        n = A.n; m = A.m; Ap = A.p; Ai = A.i
         if m != n: return (0)
         is_upper = True
         is_lower = True
@@ -427,6 +429,222 @@ class CSparseTest1(CSparseTest):
         self.assert_dimensions(D, 67, 67, 1041, 1041, 61.0906)
 
 
+class CSparseTest2(CSparseTest):
+    """Test solving linear systems.
+    """
+
+    def test2(self, prob):
+        """Solves a linear system using Cholesky, LU, and QR, with various
+        orderings.
+
+        @param prob: problem
+        @return: true if successful, false on error
+        """
+        if prob is None: return False
+        A = prob.A; C = prob.C; b = prob.b; x = prob.x; resid = prob.resid
+        m = A.m; n = A.n
+        tol = 0.001 if prob.sym != 0 else 1 # partial pivoting tolerance
+        D = cs.cs_dmperm (C, 1) # randomized dmperm analysis */
+        if D is None: return False
+        prob.nb = nb = D.nb; r = D.r; s = D.s; rr = D.rr
+        prob.sprank = sprank = rr [3]
+        ns = 0
+        for k in range(nb):
+            if (r [k+1] == r [k] + 1) and (s [k+1] == s [k] + 1):
+                ns+=1
+        prob.ns = ns
+        stdout.write("blocks: %d singletons: %d structural rank: %d\n" % (nb, ns, sprank))
+        D = None
+        for order in range(0, 4, 3): # natural and amd(A'*A)
+            if order == 0 and m > 1000: continue
+            stdout.write("QR   ")
+            self.print_order (order) ;
+            self.rhs (x, b, m) # compute right-hand side
+            t = self.tic()
+            ok = cs.cs_qrsol (order, C, x) # min norm(Ax-b) with QR
+            stdout.write("time: %8.2f ms " % self.toc (t))
+            self.print_resid (ok, C, x, b, resid, prob) # print residual
+        if m != n or sprank < n: return True # return if rect. or singular
+        for order in range(4): # try all orderings
+            if order == 0 and m > 1000: continue
+            stdout.write("LU   ")
+            self.print_order (order)
+            self.rhs (x, b, m) # compute right-hand side
+            t = self.tic()
+            ok = cs.cs_lusol (order, C, x, tol) # solve Ax=b with LU
+            stdout.write("time: %8.2f ms " % self.toc (t))
+            self.print_resid (ok, C, x, b, resid, prob) # print residual
+        if prob.sym == 0: return True
+        for order in range(2): # natural and amd(A+A')
+            if order == 0 and m > 1000: continue
+            stdout.write("Chol ")
+            self.print_order (order)
+            self.rhs (x, b, m) # compute right-hand side
+            t = self.tic()
+            ok = cs.cs_cholsol (order, C, x) # solve Ax=b with Cholesky
+            stdout.write("time: %8.2f ms " % self.toc (t))
+            self.print_resid (ok, C, x, b, resid, prob) # print residual
+        return True
+
+
+    def test_ash219(self):
+        fd = self.get_file (CSparseTest.ASH219)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 219, 85, 438, 0, 0, 9.0)
+        self.assert_structure(prob, 1, 0, 85)
+
+        self.assertEquals(1.0052, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(1.0052, prob.norms.get(1), delta=CSparseTest.DELTA)
+
+
+    def test_bcsstk01(self):
+        fd = self.get_file (CSparseTest.BCSSTK01)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+        self.assert_problem(prob, 48, 48, 224, -1, 400, 3.57094807469e+09)
+        self.assert_structure(prob, 1, 0, 48)
+
+        x_norm = 0.0005
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(6), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(7), delta=CSparseTest.DELTA)
+
+
+    def test_bcsstk16(self):
+        fd = self.get_file (CSparseTest.BCSSTK16)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 4884, 4884, 147631, -1, 290378, 7.008379365769155e+09)
+        self.assert_structure(prob, 75, 74, 4884)
+
+        x_norm = 1.9998
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+
+
+    def test_fs_183_1(self):
+        fd = self.get_file (CSparseTest.FS_183_1)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 183, 183, 988, 0, 0, 1.7031774210073e+09)
+        self.assert_dropped(prob, 71, 10)
+        self.assert_structure(prob, 38, 37, 183)
+
+        x_norm = 212022.2099
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+
+
+    def test_ibm32a(self):
+        fd = self.get_file (CSparseTest.IBM32A)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 32, 31, 123, 0, 0, 7.0)
+        self.assert_structure(prob, 1, 0, 31)
+
+        x_norm = 5.5800
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+
+
+    def test_ibm32b(self):
+        fd = self.get_file (CSparseTest.IBM32B)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 31, 32, 123, 0, 0, 8.0)
+        self.assert_structure(prob, 1, 0, 31)
+
+        x_norm = 5.3348
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+
+
+    def test_lp_afiro(self):
+        fd = self.get_file (CSparseTest.LP_AFIRO)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 27, 51, 102, 0, 0, 3.43)
+        self.assert_structure(prob, 1, 0, 27)
+
+        self.assertEquals(2.4534, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(2.4534, prob.norms.get(1), delta=CSparseTest.DELTA)
+
+
+    def test_mbeacxc(self):
+        fd = self.get_file (CSparseTest.MBEACXC)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 492, 490, 49920, 0, 0, 9.29e-01)
+        self.assert_structure(prob, 10, 8, 448)
+
+        self.assertEquals(None, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(None, prob.norms.get(1), delta=CSparseTest.DELTA)
+
+
+    def test_t1(self):
+        fd = self.get_file (CSparseTest.T1)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 4, 4, 10, 0, 0, 1.11e+01)
+        self.assert_structure(prob, 1, 0, 4)
+
+        x_norm = 2.4550
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+
+
+    def test_west0067(self):
+        fd = self.get_file (CSparseTest.WEST0067)
+        prob = self.get_problem (fd, CSparseTest.DROP_TOL)
+
+        self.test2(prob)
+
+        self.assert_problem(prob, 67, 67, 294, 0, 0, 6.14)
+        self.assert_structure(prob, 2, 1, 67)
+
+        x_norm = 21.9478
+        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+
+
 if __name__ == "__main__":
-#    import sys;sys.argv = ['', 'CSparseTest1.test_bcsstk01']
+    import sys;sys.argv = ['', 'CSparseTest2.test_bcsstk01']
     unittest.main()

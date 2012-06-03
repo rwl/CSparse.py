@@ -357,8 +357,7 @@ def cs_amd(order, A):
         p = Cp[k]
         pk1 = p if elenk == 0 else cnz # do in place if elen[elen_offset+k] == 0
         pk2 = pk1
-        k1 = 1
-        while k1 <= elenk + 1:
+        for k1 in range(1, elenk + 2):
             if k1 > elenk:
                 e = k # search the nodes in k
                 pj = p # list of nodes starts at Ci[pj]
@@ -368,8 +367,7 @@ def cs_amd(order, A):
                 p+=1
                 pj = Cp[e]
                 ln = len[e] # length of list of nodes in e
-            k2 = 1
-            while k2 <= ln:
+            for k2 in range(1, ln + 1):
                 i = Ci[pj]
                 pj+=1
                 nvi = nv[nv_offset + i]
@@ -385,11 +383,9 @@ def cs_amd(order, A):
                     next[next_offset + last[i]] = next[next_offset + i]
                 else:
                     head[head_offset + degree[degree_offset + i]] = next[next_offset + i]
-                k2+=1
             if e != k:
                 Cp[e] = CS_FLIP(k) # absorb e into k
                 w[w_offset + e] = 0 # e is now a dead element
-            k1+=1
         if elenk != 0:
             cnz = pk2 # Ci [cnz...nzmax] is free
         degree[degree_offset + k] = dk # external degree of k - |Lk\i|
@@ -468,7 +464,7 @@ def cs_amd(order, A):
         lemax = max(lemax, dk)
         mark = _cs_wclear(mark + lemax, lemax, w, w_offset, n) # clear w
         # --- Supernode detection ------------------------------------------
-        for pk in range(pk1, pk < pk2):
+        for pk in range(pk1, pk2):
             i = Ci[pk]
             if nv[nv_offset + i] >= 0:
                 continue # skip if i is dead
@@ -538,6 +534,7 @@ def cs_amd(order, A):
     j = n
     while j >= 0: # place unordered nodes in lists
         if nv[nv_offset + j] > 0:
+            j-=1
             continue # skip if j is an element
         next[next_offset + j] = head[head_offset + Cp[j]] # place j in list of its parent
         head[head_offset + Cp[j]] = j
@@ -545,6 +542,7 @@ def cs_amd(order, A):
     e = n
     while e >= 0: # place elements in lists
         if nv[nv_offset + e] <= 0:
+            e-=1
             continue # skip unless e is an element
         if Cp[e] != -1:
             next[next_offset + e] = head[head_offset + Cp[e]] # place e in list of its parent
@@ -685,7 +683,7 @@ def _NEXT(J, next, next_offset, ata):
 
 
 def _init_ata(AT, post, w):
-    m = AT.n, n = AT.m, ATp = AT.p, ATi = AT.i
+    m = AT.n; n = AT.m; ATp = AT.p; ATi = AT.i
     head = w
     head_offset = 4 * n
     next = w
@@ -1306,12 +1304,13 @@ def cs_leaf(i, j, first, first_offset, maxfirst, maxfirst_offset,
     return q # q = least common ancestor (jprev,j)
 
 
-def cs_load(filename):
+def cs_load(filename, base=0):
     """Loads a triplet matrix T from a file. Each line of the file contains
     three values: a row index i, a column index j, and a numerical value aij.
     The file is zero-based.
 
     @param filename: file name
+    @param base: index base
     @return: T if successful, null on error
     """
     T = cs_spalloc(0, 0, 1, True, True) # allocate result
@@ -1320,8 +1319,8 @@ def cs_load(filename):
             tokens = line.strip().split()
             if len(tokens) != 3:
                 return None
-            i = int(tokens[0])
-            j = int(tokens[1])
+            i = int(tokens[0]) - base
+            j = int(tokens[1]) - base
             x = float(tokens[2])
             if not cs_entry(T, i, j, x):
                 return None
@@ -1731,6 +1730,7 @@ def cs_post(parent, n):
     j = n - 1
     while j >= 0: # traverse nodes in reverse order
         if parent[j] == -1:
+            j-=1
             continue # j is a root
         next[next_offset + j] = head[parent[j]] # add j to list of its parent
         head[parent[j]] = j
@@ -2148,6 +2148,7 @@ def _cs_vcount(A, S):
         pinv[i] = -1 # row i is not yet ordered
         k = leftmost[i]
         if k == -1:
+            i-=1
             continue # row i is empty
         if nque[nque_offset + k] == 0:
             tail[tail_offset + k] = i # first row in queue k
