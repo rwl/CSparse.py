@@ -176,9 +176,9 @@ def cs_add(A, B, alpha, beta):
         return None
     m, anz, n, Bp, Bx = A.m, A.p[A.n], B.n, B.p, B.x
     bnz = Bp[n]
-    w = [0]*m # get workspace
+    w = ialloc(m) # get workspace
     values = A.x != None and Bx != None
-    x = [0.0]*m if values else None # get workspace
+    x = xalloc(m) if values else None # get workspace
     C = cs_spalloc(m, n, anz + bnz, values, False) # allocate result
     Cp, Ci, Cx = C.p, C.i, C.x
     for j in range(n):
@@ -258,8 +258,8 @@ def cs_amd(order, A):
     cs_fkeep(C, _cs_diag(), None) # drop diagonal entries
     Cp = C.p
     cnz = Cp[n]
-    P = [0]*(n + 1) # allocate result
-    W = [0]*(8 * (n + 1)) # get workspace
+    P = ialloc(n + 1) # allocate result
+    W = ialloc(8 * (n + 1)) # get workspace
     t = cnz + cnz / 5 + 2 * n # add elbow room to C
     cs_sprealloc(C, t)
     len = W
@@ -571,8 +571,8 @@ def cs_chol(A, S):
         return None
     n = A.n
     N = csn() # allocate result
-    c = [0]*(2 * n) # get int workspace
-    x = [0.0]*n # get double workspace
+    c = ialloc(2 * n) # get int workspace
+    x = xalloc(n) # get double workspace
     cp = S.cp
     pinv = S.pinv
     parent = S.parent
@@ -636,7 +636,7 @@ def cs_cholsol(order, A, b):
     n = A.n
     S = cs_schol(order, A) # ordering and symbolic analysis
     N = cs_chol(A, S) # numeric Cholesky factorization
-    x = [0.0]*n # get workspace
+    x = xalloc(n) # get workspace
     ok = S != None and N != None
     if ok:
         cs_ipvec(S.pinv, b, x, n) # x = P*b
@@ -658,7 +658,7 @@ def cs_compress(T):
     m, n = T.m, T.n
     Ti, Tj, Tx, nz = T.i, T.p, T.x, T.nz
     C = cs_spalloc(m, n, nz, Tx != None, False) # allocate result
-    w = [0]*n # get workspace
+    w = ialloc(n) # get workspace
     Cp = C.p
     Ci = C.i
     Cx = C.x
@@ -716,8 +716,8 @@ def cs_counts(A, parent, post, ata):
         return None # check inputs
     m, n = A.m, A.n
     s = 4 * n + (n + m + 1 if ata else 0)
-    delta = colcount = [0]*n # allocate result
-    w = [0]*s # get workspace
+    delta = colcount = ialloc(n) # allocate result
+    w = ialloc(s) # get workspace
     AT = cs_transpose(A, False) # AT = A'
     ancestor = w
     maxfirst = w
@@ -1046,7 +1046,7 @@ def cs_dupl(A):
         return False
     m, n = A.m, A.n
     Ap, Ai, Ax = A.p, A.i, A.x
-    w = [0]*m # get workspace
+    w = ialloc(m) # get workspace
     for i in range(m):
         w[i] = -1 # row i not yet seen
     for j in range(n):
@@ -1147,8 +1147,8 @@ def cs_etree(A, ata):
         return None # check inputs
     m, n = A.m, A.n
     Ap, Ai = A.p, A.i
-    parent = [0]*n # allocate result
-    w = [0]*(n + (m if ata else 0)) # get workspace
+    parent = ialloc(n) # allocate result
+    w = ialloc(n + (m if ata else 0)) # get workspace
     ancestor = w
     prev = w
     prev_offset = n
@@ -1381,12 +1381,12 @@ def cs_lu(A, S, tol):
     n, q = A.n, S.q
     lnz = S.lnz
     unz = S.unz
-    x = [0.0]*n # get double workspace
-    xi = [0]*(2 * n) # get int workspace
+    x = xalloc(n) # get double workspace
+    xi = ialloc(2 * n) # get int workspace
     N = csn() # allocate result
     N.L = L = cs_spalloc(n, n, lnz, True, False) # allocate result L
     N.U = U = cs_spalloc(n, n, unz, True, False) # allocate result U
-    N.pinv = pinv = [0]*n # allocate result pinv
+    N.pinv = pinv = ialloc(n) # allocate result pinv
     Lp = L.p
     Up = U.p
     for i in range(n):
@@ -1469,7 +1469,7 @@ def cs_lusol(order, A, b, tol):
     n = A.n
     S = cs_sqr(order, A, False) # ordering and symbolic analysis
     N = cs_lu(A, S, tol) # numeric LU factorization
-    x = [0.0]*n # get workspace
+    x = xalloc(n) # get workspace
     ok = S != None and N != None
     if ok:
         cs_ipvec(N.pinv, b, x, n) # x = b(p)
@@ -1537,7 +1537,7 @@ def cs_maxtrans(A, seed): # [jmatch [0..m-1]; imatch [0..n-1]]
     if not CS_CSC(A):
         return None # check inputs
     n, m, Ap, Ai = A.n, A.m, A.p, A.i
-    w = jimatch = [0]*(m + n) # allocate result
+    w = jimatch = ialloc(m + n) # allocate result
     k = 0
     for j in range(n): # count nonempty rows and columns
         if Ap[j] < Ap[j + 1]:
@@ -1575,7 +1575,7 @@ def cs_maxtrans(A, seed): # [jmatch [0..m-1]; imatch [0..n-1]]
         jmatch_offset = n
     else:
         imatch_offset = m
-    w = [0]*(5 * n) # get workspace
+    w = ialloc(5 * n) # get workspace
     cheap = w
     cheap_offset = n
     js = w
@@ -1622,9 +1622,9 @@ def cs_multiply(A, B):
     anz = A.p[A.n]
     n, Bp, Bi, Bx = B.n, B.p, B.i, B.x
     bnz = Bp[n]
-    w = [0]*m # get workspace
+    w = ialloc(m) # get workspace
     values = (A.x != None) and (Bx != None)
-    x = [0.0]*m if values else None # get workspace
+    x = xalloc(m) if values else None # get workspace
     C = cs_spalloc(m, n, anz + bnz, values, False) # allocate result
     Cp = C.p
     for j in range(n):
@@ -1703,7 +1703,7 @@ def cs_pinv(p, n):
     """
     if p == None:
         return None # p = NULL denotes identity
-    pinv = [0]*n # allocate result
+    pinv = ialloc(n) # allocate result
     for k in range(n):
         pinv[p[k]] = k # invert the permutation
     return pinv # return result
@@ -1719,8 +1719,8 @@ def cs_post(parent, n):
     k = 0
     if parent == None:
         return None # check inputs
-    post = [0]*n # allocate result
-    w = [0]*(3 * n) # get workspace
+    post = ialloc(n) # allocate result
+    w = ialloc(3 * n) # get workspace
     head = w
     next = w
     next_offset = n
@@ -1805,8 +1805,8 @@ def cs_qr(A, S):
         return None
     n, Ap, Ai, Ax = A.n, A.p, A.i, A.x
     q, parent, pinv, m2, vnz, rnz, leftmost = S.q, S.parent, S.pinv, S.m2, S.lnz, S.unz, S.leftmost
-    w = [0]*(m2 + n) # get int workspace
-    x = [0.0]*m2 # get double workspace
+    w = ialloc(m2 + n) # get int workspace
+    x = xalloc(m2) # get double workspace
     N = csn() # allocate result
     s = w
     s_offset = m2 # s is size n
@@ -1814,7 +1814,7 @@ def cs_qr(A, S):
         x[k] = 0 # clear workspace x
     N.L = V = cs_spalloc(m2, n, vnz, True, False) # allocate result V
     N.U = R = cs_spalloc(m2, n, rnz, True, False) # allocate result R
-    N.B = Beta = [0.0]*n # allocate result Beta
+    N.B = Beta = xalloc(n) # allocate result Beta
     Rp, Ri, Rx = R.p, R.i, R.x
     Vp, Vi, Vx = V.p, V.i, V.x
     for i in range(m2):
@@ -1887,7 +1887,7 @@ def cs_qrsol(order, A, b):
     if m >= n:
         S = cs_sqr(order, A, True) # ordering and symbolic analysis
         N = cs_qr(A, S) # numeric QR factorization
-        x = [0.0]*(S.m2 if S != None else 1) # get workspace
+        x = xalloc(S.m2 if S != None else 1) # get workspace
         ok = S != None and N != None
         if ok:
             cs_ipvec(S.pinv, b, x, m) # x(0:m-1) = b(p(0:m-1)
@@ -1899,7 +1899,7 @@ def cs_qrsol(order, A, b):
         AT = cs_transpose(A, True) # Ax=b is underdetermined
         S = cs_sqr(order, AT, True) # ordering and symbolic analysis
         N = cs_qr(AT, S) # numeric QR factorization of A'
-        x = [0.0]*(S.m2 if S != None else 1) # get workspace
+        x = xalloc(S.m2 if S != None else 1) # get workspace
         ok = AT != None and S != None and N != None
         if ok:
             cs_pvec(S.q, b, x, m) # x(q(0:m-1)) = b(0:m-1)
@@ -1923,7 +1923,7 @@ def cs_randperm(n, seed):
     """
     if seed == 0:
         return None # return p = NULL (identity)
-    p = [0]*n # allocate result
+    p = ialloc(n) # allocate result
     for k in range(n):
         p[k] = n - k - 1
     if seed == -1:
@@ -2001,7 +2001,7 @@ def cs_scc(A):
     Ap = A.p
     D = cs_dalloc(n, 0) # allocate result
     AT = cs_transpose(A, False) # AT = A'
-    xi = [0]*(2 * n + 1) # get workspace
+    xi = ialloc(2 * n + 1) # get workspace
     if D == None or AT == None:
         return None
     Blk = xi
@@ -2067,7 +2067,7 @@ def cs_schol(order, A):
     S.parent = cs_etree(C, False) # find etree of C
     post = cs_post(S.parent, n) # postorder the etree
     c = cs_counts(C, S.parent, post, False) # find column counts of chol(C)
-    S.cp = [0]*(n + 1) # allocate result S.cp
+    S.cp = ialloc(n + 1) # allocate result S.cp
     S.unz = S.lnz = cs_cumsum(S.cp, c, n) # find column pointers for L
     return S if S.lnz >= 0 else None
 
@@ -2120,9 +2120,9 @@ def _cs_vcount(A, S):
     """
     n = A.n; m = A.m; Ap = A.p; Ai = A.i
     parent = S.parent
-    S.pinv = pinv = [0]*(m + n) # allocate pinv,
-    S.leftmost = leftmost = [0]*m # and leftmost
-    w = [0]*(m + 3 * n) # get workspace
+    S.pinv = pinv = ialloc(m + n) # allocate pinv,
+    S.leftmost = leftmost = ialloc(m) # and leftmost
+    w = ialloc(m + 3 * n) # get workspace
     next = w
     head = w
     head_offset = m
@@ -2228,7 +2228,7 @@ def cs_symperm(A, pinv, values):
         return None # check inputs
     n, Ap, Ai, Ax = A.n, A.p, A.i, A.x
     C = cs_spalloc(n, n, Ap[n], values and (Ax != None), False) # alloc result
-    w = [0]*n # get workspace
+    w = ialloc(n) # get workspace
     Cp, Ci, Cx = C.p, C.i, C.x
     for j in range(n): # count entries in each column of C
         j2 = pinv[j] if pinv != None else j # column j of A is column j2 of C
@@ -2299,7 +2299,7 @@ def cs_transpose(A, values):
         return None # check inputs
     m, n, Ap, Ai, Ax = A.m, A.n, A.p, A.i, A.x
     C = cs_spalloc(n, m, Ap[n], values and (Ax != None), False) # allocate result
-    w = [0]*m # get workspace
+    w = ialloc(m) # get workspace
     Cp, Ci, Cx = C.p, C.i, C.x
     for p in range(Ap[n]):
         w[Ai[p]]+=1 # row counts
@@ -2331,7 +2331,7 @@ def cs_updown(L, sigma, C, parent):
     p = Cp[0]
     if p >= Cp[1]:
         return True # return if C empty
-    w = [0.0]*n # get workspace
+    w = xalloc(n) # get workspace
     f = Ci[p]
     while p < Cp[1]:
         f = min(f, Ci[p]) # f = min (find (C))
@@ -2399,9 +2399,9 @@ def cs_spalloc(m, n, nzmax, values, triplet):
     A.n = n
     A.nzmax = nzmax = max(nzmax, 1)
     A.nz = 0 if triplet else -1 # allocate triplet or comp.col
-    A.p = [0]*nzmax if triplet else [0]*(n + 1)
-    A.i = [0]*nzmax
-    A.x = [0.0]*nzmax if values else None
+    A.p = ialloc(nzmax) if triplet else ialloc(n + 1)
+    A.i = ialloc(nzmax)
+    A.x = xalloc(nzmax) if values else None
     return A
 
 
@@ -2421,17 +2421,17 @@ def cs_sprealloc(A, nzmax):
         return False
     if nzmax <= 0:
         nzmax = A.p[A.n] if CS_CSC(A) else A.nz
-    Ainew = [0]*nzmax
+    Ainew = ialloc(nzmax)
     length = min(nzmax, len(A.i))
     _copy(A.i, Ainew, length)
     A.i = Ainew
     if CS_TRIPLET(A):
-        Apnew = [0]*nzmax
+        Apnew = ialloc(nzmax)
         length = min(nzmax, len(A.p))
         _copy(A.p, Apnew, length)
         A.p = Apnew
     if A.x != None:
-        Axnew = [0.0]*nzmax
+        Axnew = xalloc(nzmax)
         length = min(nzmax, len(A.x))
         _copy(A.x, Axnew, length)
         A.x = Axnew
@@ -2447,12 +2447,12 @@ def cs_dalloc(m, n):
     @return: Dulmage-Mendelsohn decomposition
     """
     D = csd()
-    D.p = [0]*m
-    D.r = [0]*(m + 6)
-    D.q = [0]*n
-    D.s = [0]*(n + 6)
-    D.cc = [0]*5
-    D.rr = [0]*5
+    D.p = ialloc(m)
+    D.r = ialloc(m + 6)
+    D.q = ialloc(n)
+    D.s = ialloc(n + 6)
+    D.cc = ialloc(5)
+    D.rr = ialloc(5)
     return D
 
 
@@ -2472,3 +2472,11 @@ def cs_utsolve(U, x):
             x[j] -= Ux[p] * x[Ui[p]]
         x[j] /= Ux[Up[j + 1] - 1]
     return True
+
+
+def ialloc(n):
+    return [0]*n
+
+
+def xalloc(n):
+    return [0.0]*n
