@@ -17,13 +17,10 @@
 # Foundation, Inc, 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 
 import time
-
 from sys import stdout
-
 from os.path import abspath, dirname, join
-
 import unittest
-
+from random import random
 import csparse as cs
 
 
@@ -496,8 +493,8 @@ class CSparseTest2(CSparseTest):
         self.assert_problem(prob, 219, 85, 438, 0, 0, 9.0)
         self.assert_structure(prob, 1, 0, 85)
 
-        self.assertEquals(1.0052, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(1.0052, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(1.0052, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(1.0052, prob.norms[1], delta=CSparseTest.DELTA)
 
 
     def test_bcsstk01(self):
@@ -509,14 +506,14 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 1, 0, 48)
 
         x_norm = 0.0005
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(6), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(7), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[4], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[5], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[6], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[7], delta=CSparseTest.DELTA)
 
 
     def test_bcsstk16(self):
@@ -529,11 +526,11 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 75, 74, 4884)
 
         x_norm = 1.9998
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[4], delta=CSparseTest.DELTA)
 
 
     def test_fs_183_1(self):
@@ -547,12 +544,12 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 38, 37, 183)
 
         x_norm = 212022.2099
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[4], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[5], delta=CSparseTest.DELTA)
 
 
     def test_ibm32a(self):
@@ -565,8 +562,8 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 1, 0, 31)
 
         x_norm = 5.5800
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
 
 
     def test_ibm32b(self):
@@ -579,8 +576,8 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 1, 0, 31)
 
         x_norm = 5.3348
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
 
 
     def test_lp_afiro(self):
@@ -592,8 +589,8 @@ class CSparseTest2(CSparseTest):
         self.assert_problem(prob, 27, 51, 102, 0, 0, 3.43)
         self.assert_structure(prob, 1, 0, 27)
 
-        self.assertEquals(2.4534, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(2.4534, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(2.4534, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(2.4534, prob.norms[1], delta=CSparseTest.DELTA)
 
 
     def test_mbeacxc(self):
@@ -605,8 +602,8 @@ class CSparseTest2(CSparseTest):
         self.assert_problem(prob, 492, 490, 49920, 0, 0, 9.29e-01)
         self.assert_structure(prob, 10, 8, 448)
 
-        self.assertEquals(None, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(None, prob.norms.get(1), delta=CSparseTest.DELTA)
+        self.assertEquals(None, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(None, prob.norms[1], delta=CSparseTest.DELTA)
 
 
     def test_t1(self):
@@ -619,12 +616,12 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 1, 0, 4)
 
         x_norm = 2.4550
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[4], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[5], delta=CSparseTest.DELTA)
 
 
     def test_west0067(self):
@@ -637,12 +634,137 @@ class CSparseTest2(CSparseTest):
         self.assert_structure(prob, 2, 1, 67)
 
         x_norm = 21.9478
-        self.assertEquals(x_norm, prob.norms.get(0), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(1), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(2), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(3), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(4), delta=CSparseTest.DELTA)
-        self.assertEquals(x_norm, prob.norms.get(5), delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[0], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[4], delta=CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[5], delta=CSparseTest.DELTA)
+
+
+class CSparseTest3(CSparseTest):
+    """Read a matrix, solve a linear system and update/downdate.
+    """
+
+    def test3(self, prob):
+        """Cholesky update/downdate
+
+        @param prob: problem
+        @return: true if successful, false on error
+        """
+        if prob is None or prob.sym == 0 or prob.A.n == 0: return False
+        A = prob.A; C = prob.C; b = prob.b; x = prob.x; resid = prob.resid
+        n = A.n
+        if prob.sym == 0 or n == 0: return True
+        self.rhs (x, b, n) # compute right-hand side
+        stdout.write("\nchol then update/downdate ")
+        self.print_order (1)
+        y = cs.xalloc(n)
+        t = self.tic()
+        S = cs.cs_schol (1, C) # symbolic Chol, amd(A+A')
+        stdout.write("\nsymbolic chol time %8.2f ms\n" % self.toc (t))
+        t = self.tic()
+        N = cs.cs_chol (C, S) # numeric Cholesky
+        stdout.write("numeric  chol time %8.2f ms\n" % self.toc (t))
+        if S is None or N is None: return False
+        t = self.tic()
+        cs.cs_ipvec (S.pinv, b, y, n) # y = P*b
+        cs.cs_lsolve (N.L, y) # y = L\y
+        cs.cs_ltsolve (N.L, y) # y = L'\y
+        cs.cs_pvec (S.pinv, y, x, n) # x = P'*y
+        stdout.write("solve    chol time %8.2f ms\n" % self.toc (t))
+        stdout.write("original: ")
+        self.print_resid (True, C, x, b, resid, prob) # print residual
+        k = n / 2 # construct W
+        W = cs.cs_spalloc (n, 1, n, True, False)
+        Lp = N.L.p; Li = N.L.i; Lx = N.L.x
+        Wp = W.p; Wi = W.i; Wx = W.x
+        Wp [0] = 0
+        p1 = Lp [k]
+        Wp [1] = Lp [k+1] - p1
+        s = Lx[p1]
+        while p1 < Lp [k+1]:
+            p2 = p1 - Lp [k] ;
+            Wi [p2] = Li [p1] ;
+            Wx[p2] = s * random()
+            p1+=1
+
+        t = self.tic()
+        ok = cs.cs_updown (N.L, +1, W, S.parent) # update: L*L'+W*W'
+        t1 = self.toc (t)
+        stdout.write("update:   time: %8.2f ms\n" % t1)
+        if not ok: return False
+        t = self.tic()
+        cs.cs_ipvec (S.pinv, b, y, n) # y = P*b
+        cs.cs_lsolve (N.L, y) # y = L\y
+        cs.cs_ltsolve (N.L, y) # y = L'\y
+        cs.cs_pvec (S.pinv, y, x, n) # x = P'*y
+        t = self.toc (t)
+        p = cs.cs_pinv (S.pinv, n)
+        W2 = cs.cs_permute (W, p, None, True) # E = C + (P'W)*(P'W)'
+        WT = cs.cs_transpose (W2, True)
+        WW = cs.cs_multiply (W2, WT)
+        WT = None
+        W2 = None
+        E = cs.cs_add (C, WW, 1, 1)
+        WW = None
+        if E is None or p is None: return False
+        stdout.write("update:   time: %8.2f ms(incl solve) " % (t1 + t))
+        self.print_resid (True, E, x, b, resid, prob) # print residual
+        N = None # clear N
+        t = self.tic()
+        N = cs.cs_chol (E, S) # numeric Cholesky
+        if N is None: return False
+        cs.cs_ipvec (S.pinv, b, y, n) # y = P*b
+        cs.cs_lsolve (N.L, y) # y = L\y
+        cs.cs_ltsolve (N.L, y) # y = L'\y
+        cs.cs_pvec (S.pinv, y, x, n) # x = P'*y
+        t = self.toc (t)
+        stdout.write("rechol:   time: %8.2f ms(incl solve) " % t)
+        self.print_resid (True, E, x, b, resid, prob) # print residual
+        t = self.tic()
+        ok = cs.cs_updown (N.L, -1, W, S.parent) #  downdate: L*L'-W*W'
+        t1 = self.toc (t)
+        if not ok: return False
+        stdout.write("downdate: time: %8.2f\n" % t1)
+        t = self.tic()
+        cs.cs_ipvec (S.pinv, b, y, n) # y = P*b
+        cs.cs_lsolve (N.L, y) # y = L\y
+        cs.cs_ltsolve (N.L, y) # y = L'\y
+        cs.cs_pvec (S.pinv, y, x, n) # x = P'*y
+        t = self.toc (t)
+        stdout.printf("downdate: time: %8.2f ms(incl solve) " % (t1 + t))
+        self.print_resid (True, C, x, b, resid, prob) # print residual
+        return True
+
+    def test_bcsstk01(self):
+        fd = self.get_file (CSparseTest.BCSSTK01)
+        prob = self.get_problem (fd, 0)
+
+        self.assert_problem(prob, 48, 48, 224, -1, 400, 3.5709480746974373e+09)
+
+        self.test3(prob)
+
+        x_norm = 0.0005
+        self.assertEquals(x_norm, prob.norms[0], delta=1e-04)
+        self.assertEquals(x_norm, prob.norms[1], delta=1e-04)
+        self.assertEquals(x_norm, prob.norms[2], delta=1e-04)
+        self.assertEquals(x_norm, prob.norms[3], delta=1e-04)
+
+
+    def test_bcsstk16(self):
+        fd = self.get_file (CSparseTest.BCSSTK16) ;
+        prob = self.get_problem (fd, 0) ;
+
+        self.assert_problem(prob, 4884, 4884, 147631, -1, 290378, 7.008379365769155e+09)
+
+        self.test3(prob)
+
+        x_norm = 1.9998
+        self.assertEquals(x_norm, prob.norms[0], CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[1], CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[2], CSparseTest.DELTA)
+        self.assertEquals(x_norm, prob.norms[3], CSparseTest.DELTA)
 
 
 if __name__ == "__main__":
